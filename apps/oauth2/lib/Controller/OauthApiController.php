@@ -35,6 +35,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
+use OCP\IUserSession;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
 
@@ -53,8 +54,21 @@ class OauthApiController extends Controller {
 	private $time;
 	/** @var Throttler */
 	private $throttler;
+	/** IUserSession */
+	private $userSession;
 
-	public function __construct(string $appName,
+	/**
+	 * @param string $appName
+	 * @param IRequest $request
+	 * @param ICrypto $crypto
+	 * @param AccessTokenMapper $accessTokenMapper
+	 * @param ClientMapper $clientMapper
+	 * @param TokenProvider $tokenProvider
+	 * @param ISecureRandom $secureRandom
+	 * @param ITimeFactory $time
+	 * @param IUserSession $userSession
+	 */
+	public function __construct($appName,
 								IRequest $request,
 								ICrypto $crypto,
 								AccessTokenMapper $accessTokenMapper,
@@ -62,7 +76,7 @@ class OauthApiController extends Controller {
 								TokenProvider $tokenProvider,
 								ISecureRandom $secureRandom,
 								ITimeFactory $time,
-								Throttler $throttler) {
+								IUserSession $userSession) {
 		parent::__construct($appName, $request);
 		$this->crypto = $crypto;
 		$this->accessTokenMapper = $accessTokenMapper;
@@ -70,7 +84,7 @@ class OauthApiController extends Controller {
 		$this->tokenProvider = $tokenProvider;
 		$this->secureRandom = $secureRandom;
 		$this->time = $time;
-		$this->throttler = $throttler;
+		$this->userSession = $userSession;
 	}
 
 	/**
@@ -172,4 +186,30 @@ class OauthApiController extends Controller {
 			]
 		);
 	}
+
+	/**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
+	 */
+	public function getUserinfo() {
+
+		if ($this->userSession->isLoggedIn()) {
+			return new JSONResponse(
+				[
+					'username' => $this->userSession->getUser()->getUID(),
+					'displayname' =>  $this->userSession->getUser()->getDisplayName(),
+				]
+			);
+		}
+		else
+		{
+			return new JSONResponse(
+				[
+				]
+			);
+		}
+	}
+
 }
