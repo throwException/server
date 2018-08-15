@@ -160,10 +160,13 @@ class SMB extends Common implements INotifyStorage {
 			}
 			return array_filter($files, function (IFileInfo $file) {
 				try {
+					\OC::$server->getLogger()->debug('hiding hidden file ' . $file->getName());
 					return !$file->isHidden();
 				} catch (ForbiddenException $e) {
+					\OC::$server->getLogger()->logException($e, ['level' => Util::DEBUG, 'message' => 'Hiding forbidden entry ' . $file->getName()]);
 					return false;
 				} catch (NotFoundException $e) {
+					\OC::$server->getLogger()->logException($e, ['level' => Util::DEBUG, 'message' => 'Hiding not found entry ' . $file->getName()]);
 					return false;
 				}
 			});
