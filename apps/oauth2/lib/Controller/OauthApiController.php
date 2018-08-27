@@ -36,6 +36,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IRequest;
 use OCP\IUserSession;
+use OCP\IGroupManager;
 use OCP\Security\ICrypto;
 use OCP\Security\ISecureRandom;
 
@@ -56,6 +57,8 @@ class OauthApiController extends Controller {
 	private $throttler;
 	/** IUserSession */
 	private $userSession;
+    /** IGroupManager */
+    private $groupManager;
 
 	/**
 	 * @param string $appName
@@ -67,6 +70,7 @@ class OauthApiController extends Controller {
 	 * @param ISecureRandom $secureRandom
 	 * @param ITimeFactory $time
 	 * @param IUserSession $userSession
+	 * @param IGroupManager $groupManager
 	 */
 	public function __construct($appName,
 								IRequest $request,
@@ -76,7 +80,8 @@ class OauthApiController extends Controller {
 								TokenProvider $tokenProvider,
 								ISecureRandom $secureRandom,
 								ITimeFactory $time,
-								IUserSession $userSession) {
+								IUserSession $userSession,
+								IGroupManager $groupManager) {
 		parent::__construct($appName, $request);
 		$this->crypto = $crypto;
 		$this->accessTokenMapper = $accessTokenMapper;
@@ -85,6 +90,7 @@ class OauthApiController extends Controller {
 		$this->secureRandom = $secureRandom;
 		$this->time = $time;
 		$this->userSession = $userSession;
+		$this->groupManager = $groupManager;
 	}
 
 	/**
@@ -196,10 +202,18 @@ class OauthApiController extends Controller {
 	public function getUserinfo() {
 
 		if ($this->userSession->isLoggedIn()) {
+
+            $groups = [];
+
+            foreach($this->groupManager->getUserGroups($this->userSession->getUser()) as $group) {
+                $groups[] = $group->getGID();
+            }
+
 			return new JSONResponse(
 				[
 					'username' => $this->userSession->getUser()->getUID(),
 					'displayname' =>  $this->userSession->getUser()->getDisplayName(),
+                    "groups" => $groups,
 				]
 			);
 		}
@@ -210,6 +224,27 @@ class OauthApiController extends Controller {
 				]
 			);
 		}
+	}
+	
+    /**
+	 * @PublicPage
+	 * @NoCSRFRequired
+	 *
+	 * @return JSONResponse
+	 */
+	public function getGroupinfo() {
+
+        $groups = [];
+
+		foreach($this->groupManager->search('') as $group) {
+		    $groups[] = $group->getGID();
+        }
+
+		return new JSONResponse(
+			[
+                "groups" => $groups,
+	    	]
+		);
 	}
 
 }

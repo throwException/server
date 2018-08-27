@@ -51,5 +51,10 @@ return [
 			'url' => '/api/v1/userinfo',
 			'verb' => 'GET'
 		],
+		[
+			'name' => 'OauthApi#getGroupinfo',
+			'url' => '/api/v1/groupinfo',
+			'verb' => 'GET'
+		],
 	],
 ];
